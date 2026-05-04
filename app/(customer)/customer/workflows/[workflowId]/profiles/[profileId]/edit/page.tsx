@@ -1,54 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
-import { useCustomerSession, clearCustomerSession } from "@/lib/auth/session";
 import { getProfile, updateProfile } from "@/lib/api/profiles";
+import { BackLink } from "@/components/ui/BackLink";
 import { ErrorCard, LoadingText } from "@/components/ui/FetchFeedback";
 import ProfileForm from "@/components/profiles/ProfileForm";
-import { ApiError, type WorkflowProfileRecord, type IdentityProfileRecipes } from "@/lib/types/api";
-
-type FetchState =
-  | { status: "loading" }
-  | { status: "ready"; data: WorkflowProfileRecord }
-  | { status: "error"; message: string };
+import { useCustomerResource } from "@/lib/hooks/useCustomerResource";
+import type { IdentityProfileRecipes } from "@/lib/types/api";
 
 export default function EditProfilePage() {
   const router = useRouter();
   const { workflowId, profileId } = useParams<{ workflowId: string; profileId: string }>();
-  const session = useCustomerSession();
-  const [state, setState] = useState<FetchState>({ status: "loading" });
-
-  useEffect(() => {
-    if (!session.ready || !session.token) return;
-    const ctrl = new AbortController();
-    const { token } = session;
-    getProfile(token, workflowId, profileId)
-      .then((res) => {
-        if (ctrl.signal.aborted) return;
-        setState({ status: "ready", data: res.data });
-      })
-      .catch((err: unknown) => {
-        if (ctrl.signal.aborted) return;
-        if (err instanceof ApiError) {
-          if (err.status === 401) {
-            clearCustomerSession();
-            router.replace("/customer/login");
-            return;
-          }
-          setState({ status: "error", message: err.message });
-        } else {
-          setState({ status: "error", message: "Failed to load" });
-        }
-      });
-    return () => ctrl.abort();
-  }, [session, workflowId, profileId, router]);
+  const loadProfile = useCallback(
+    (token: string) => getProfile(token, workflowId, profileId).then((res) => res.data),
+    [workflowId, profileId]
+  );
+  const { state, token } = useCustomerResource(loadProfile);
 
   async function handleSubmit(payload: { name: string; recipes: IdentityProfileRecipes }) {
-    if (!session.token) throw new Error("Not authenticated");
-    await updateProfile(session.token, workflowId, profileId, payload);
+    if (!token) throw new Error("Not authenticated");
+    await updateProfile(token, workflowId, profileId, payload);
     router.push(`/customer/workflows/${workflowId}/profiles/${profileId}`);
   }
 
@@ -56,13 +28,9 @@ export default function EditProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl px-8 py-8">
-      <Link
-        href={`/customer/workflows/${workflowId}/profiles/${profileId}`}
-        className="mb-6 flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900"
-      >
-        <ChevronLeft size={14} />
+      <BackLink href={`/customer/workflows/${workflowId}/profiles/${profileId}`}>
         Back to Profile
-      </Link>
+      </BackLink>
       <h1 className="mb-6 text-2xl font-semibold text-slate-900">Edit Profile</h1>
 
       {errorMessage ? <ErrorCard message={errorMessage} /> : null}
