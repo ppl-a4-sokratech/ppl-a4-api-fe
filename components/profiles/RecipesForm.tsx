@@ -49,16 +49,19 @@ type BooleanFieldProps = Readonly<{
 
 function BooleanField({ id, checked, onChange, label }: BooleanFieldProps) {
   return (
-    <label htmlFor={id} className="flex cursor-pointer items-center gap-2">
-      <input
-        id={id}
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 rounded border-slate-300 accent-[#0a2540]"
-      />
-      <span className="text-sm capitalize text-slate-700">{label}</span>
-    </label>
+    <button
+      id={id}
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+        checked ? 'bg-emerald-700 text-white' : 'bg-white text-slate-500 ring-1 ring-slate-500 hover:bg-slate-50'
+      }`}
+    >
+      <span className={`inline-block h-2 w-2 rounded-full ${checked ? 'bg-white/70' : 'bg-slate-300'}`} />
+      <span className="capitalize">{label}</span>
+    </button>
   );
 }
 
@@ -107,7 +110,7 @@ function RecipeSection({
                 {allSelected ? 'Clear all' : 'Select all'}
               </button>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{children}</div>
+            <div className="flex flex-wrap gap-2">{children}</div>
           </>
         ) : (
           <p className="text-sm text-slate-500">Enable this group to configure its signals.</p>
