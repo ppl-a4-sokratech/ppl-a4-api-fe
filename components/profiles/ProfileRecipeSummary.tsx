@@ -50,7 +50,7 @@ function RecipeGroup({ title, enabled, fields }: RecipeGroupProps) {
   );
 }
 
-export function ProfileRecipeSummary({ recipes }: { recipes: IdentityProfileRecipes }) {
+export function ProfileRecipeSummary({ recipes }: Readonly<{ recipes: IdentityProfileRecipes }>) {
   const groups = [
     { title: "Behavioral", value: recipes.behavioral },
     { title: "Fingerprint", value: recipes.fingerprint },
