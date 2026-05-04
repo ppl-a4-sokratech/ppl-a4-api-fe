@@ -190,7 +190,7 @@ export default function WorkflowList({ workflows, onDeleted, onDelete }: Workflo
                       <td className="px-6 py-4">
                         <Link
                           href={`/customer/workflows/${workflow.id}`}
-                          className="text-left text-sm font-medium text-slate-900 hover:text-[#0a2540] hover:underline"
+                          className="block max-w-[220px] break-words text-sm font-medium text-slate-900 hover:text-[#0a2540] hover:underline"
                         >
                           {workflow.name}
                         </Link>

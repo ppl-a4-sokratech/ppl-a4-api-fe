@@ -109,7 +109,7 @@ export default function ProfileList({ workflowId, profiles, onDeleted, onDelete 
                       <td className="px-6 py-4">
                         <Link
                           href={`/customer/workflows/${workflowId}/profiles/${profile.id}`}
-                          className="text-sm font-medium text-slate-900 hover:text-[#0a2540] hover:underline"
+                          className="block max-w-[220px] break-words text-sm font-medium text-slate-900 hover:text-[#0a2540] hover:underline"
                         >
                           {profile.name}
                         </Link>
