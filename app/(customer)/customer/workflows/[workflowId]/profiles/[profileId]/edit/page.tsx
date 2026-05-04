@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { useCustomerSession, clearCustomerSession } from "@/lib/auth/session";
 import { getProfile, updateProfile } from "@/lib/api/profiles";
-import { Card, CardBody } from "@/components/ui/card";
+import { ErrorCard, LoadingText } from "@/components/ui/FetchFeedback";
 import ProfileForm from "@/components/profiles/ProfileForm";
 import { ApiError, type WorkflowProfileRecord, type IdentityProfileRecipes } from "@/lib/types/api";
 
@@ -65,15 +65,8 @@ export default function EditProfilePage() {
       </Link>
       <h1 className="mb-6 text-2xl font-semibold text-slate-900">Edit Profile</h1>
 
-      {errorMessage ? (
-        <Card className="mb-6 border-red-200 bg-red-50/50">
-          <CardBody>
-            <p className="text-sm text-red-700">{errorMessage}</p>
-          </CardBody>
-        </Card>
-      ) : null}
-
-      {state.status === "loading" && <p className="text-sm text-slate-500">Loading…</p>}
+      {errorMessage ? <ErrorCard message={errorMessage} /> : null}
+      {state.status === "loading" && <LoadingText />}
 
       {state.status === "ready" && (
         <ProfileForm

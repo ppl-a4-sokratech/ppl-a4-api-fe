@@ -7,6 +7,7 @@ import { ChevronLeft, Pencil } from "lucide-react";
 import { useCustomerSession, clearCustomerSession } from "@/lib/auth/session";
 import { getProfile } from "@/lib/api/profiles";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
+import { ErrorCard, LoadingText } from "@/components/ui/FetchFeedback";
 import { ApiError, type WorkflowProfileRecord } from "@/lib/types/api";
 
 type FetchState =
@@ -98,15 +99,8 @@ export default function ProfileDetailPage() {
         Back to Workflow
       </Link>
 
-      {errorMessage ? (
-        <Card className="border-red-200 bg-red-50/50">
-          <CardBody>
-            <p className="text-sm text-red-700">{errorMessage}</p>
-          </CardBody>
-        </Card>
-      ) : null}
-
-      {loading && <p className="text-sm text-slate-500">Loading…</p>}
+      {errorMessage ? <ErrorCard message={errorMessage} /> : null}
+      {loading && <LoadingText />}
 
       {profile ? (
         <>

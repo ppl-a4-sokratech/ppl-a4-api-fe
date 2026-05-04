@@ -7,7 +7,7 @@ import { ChevronLeft, Pencil, Plus } from "lucide-react";
 import { useCustomerSession, clearCustomerSession } from "@/lib/auth/session";
 import { getWorkflow } from "@/lib/api/workflows";
 import { deleteProfile } from "@/lib/api/profiles";
-import { Card, CardBody } from "@/components/ui/card";
+import { ErrorCard, LoadingText } from "@/components/ui/FetchFeedback";
 import ProfileList from "@/components/profiles/ProfileList";
 import { ApiError, type WorkflowRecord } from "@/lib/types/api";
 
@@ -66,15 +66,8 @@ export default function WorkflowDetailPage() {
         Back to Workflows
       </Link>
 
-      {errorMessage ? (
-        <Card className="border-red-200 bg-red-50/50">
-          <CardBody>
-            <p className="text-sm text-red-700">{errorMessage}</p>
-          </CardBody>
-        </Card>
-      ) : null}
-
-      {loading && <p className="text-sm text-slate-500">Loading…</p>}
+      {errorMessage ? <ErrorCard message={errorMessage} /> : null}
+      {loading && <LoadingText />}
 
       {workflow ? (
         <>
