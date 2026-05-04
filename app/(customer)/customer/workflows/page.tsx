@@ -1,38 +1,58 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { useCustomerSession } from "@/lib/auth/session";
+import { useCustomerSession, clearCustomerSession } from "@/lib/auth/session";
 import { listWorkflows, deleteWorkflow } from "@/lib/api/workflows";
 import { Card, CardBody } from "@/components/ui/card";
 import WorkflowList from "@/components/workflows/WorkflowList";
-import type { WorkflowRecord } from "@/lib/types/api";
+import { ApiError, type WorkflowRecord } from "@/lib/types/api";
+
+type FetchState =
+  | { status: "loading" }
+  | { status: "ready"; data: WorkflowRecord[] }
+  | { status: "error"; message: string };
 
 export default function WorkflowsPage() {
+  const router = useRouter();
   const session = useCustomerSession();
-  const [workflows, setWorkflows] = useState<WorkflowRecord[]>([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<FetchState>({ status: "loading" });
 
   useEffect(() => {
-    if (!session.ready || !session.token || !session.user) return;
-    const { token, user } = session;
-    (async () => {
-      try {
-        const res = await listWorkflows(token, user.customerId);
-        setWorkflows(res.data);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [session.ready, session.token, session.user]);
+    if (!session.ready || !session.token) return;
+    const ctrl = new AbortController();
+    const { token } = session;
+    listWorkflows(token)
+      .then((res) => {
+        if (ctrl.signal.aborted) return;
+        setState({ status: "ready", data: res.data });
+      })
+      .catch((err: unknown) => {
+        if (ctrl.signal.aborted) return;
+        if (err instanceof ApiError) {
+          if (err.status === 401) {
+            clearCustomerSession();
+            router.replace("/customer/login");
+            return;
+          }
+          setState({ status: "error", message: err.message });
+        } else {
+          setState({ status: "error", message: "Failed to load" });
+        }
+      });
+    return () => ctrl.abort();
+  }, [session.ready, session.token, router]);
 
   function handleDeleted(id: string) {
-    setWorkflows((prev) => prev.filter((w) => w.id !== id));
+    if (state.status !== "ready") return;
+    setState({ status: "ready", data: state.data.filter((w) => w.id !== id) });
   }
+
+  const workflows = state.status === "ready" ? state.data : [];
+  const loading = state.status === "loading";
+  const errorMessage = state.status === "error" ? state.message : null;
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-8 py-8">
@@ -50,22 +70,31 @@ export default function WorkflowsPage() {
         </Link>
       </div>
 
+      {errorMessage ? (
+        <Card className="border-red-200 bg-red-50/50">
+          <CardBody>
+            <p className="text-sm text-red-700">{errorMessage}</p>
+          </CardBody>
+        </Card>
+      ) : null}
+
       {loading && <p className="text-sm text-slate-500">Loading…</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {!loading && !error && workflows.length === 0 && (
+
+      {!loading && !errorMessage && workflows.length === 0 && (
         <Card>
           <CardBody>
             <p className="text-sm text-slate-500">No workflows yet. Create your first one.</p>
           </CardBody>
         </Card>
       )}
-      {!loading && !error && workflows.length > 0 && (
+
+      {!loading && !errorMessage && workflows.length > 0 && (
         <WorkflowList
           workflows={workflows}
           onDeleted={handleDeleted}
           onDelete={async (id) => {
-            if (!session.token || !session.user) throw new Error("Not authenticated");
-            await deleteWorkflow(session.token, session.user.customerId, id);
+            if (!session.token) throw new Error("Not authenticated");
+            await deleteWorkflow(session.token, id);
           }}
         />
       )}

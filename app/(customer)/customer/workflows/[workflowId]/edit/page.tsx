@@ -4,35 +4,55 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { useCustomerSession } from "@/lib/auth/session";
+import { useCustomerSession, clearCustomerSession } from "@/lib/auth/session";
 import { getWorkflow, updateWorkflow } from "@/lib/api/workflows";
+import { Card, CardBody } from "@/components/ui/card";
 import WorkflowForm from "@/components/workflows/WorkflowForm";
+import { ApiError } from "@/lib/types/api";
+
+type FetchState =
+  | { status: "loading" }
+  | { status: "ready"; initialName: string }
+  | { status: "error"; message: string };
 
 export default function EditWorkflowPage() {
   const router = useRouter();
   const { workflowId } = useParams<{ workflowId: string }>();
   const session = useCustomerSession();
-  const [initialName, setInitialName] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [state, setState] = useState<FetchState>({ status: "loading" });
 
   useEffect(() => {
-    if (!session.ready || !session.token || !session.user) return;
-    const { token, user } = session;
-    (async () => {
-      try {
-        const res = await getWorkflow(token, user.customerId, workflowId);
-        setInitialName(res.data.name);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load");
-      }
-    })();
-  }, [session.ready, session.token, workflowId]);
+    if (!session.ready || !session.token) return;
+    const ctrl = new AbortController();
+    const { token } = session;
+    getWorkflow(token, workflowId)
+      .then((res) => {
+        if (ctrl.signal.aborted) return;
+        setState({ status: "ready", initialName: res.data.name });
+      })
+      .catch((err: unknown) => {
+        if (ctrl.signal.aborted) return;
+        if (err instanceof ApiError) {
+          if (err.status === 401) {
+            clearCustomerSession();
+            router.replace("/customer/login");
+            return;
+          }
+          setState({ status: "error", message: err.message });
+        } else {
+          setState({ status: "error", message: "Failed to load" });
+        }
+      });
+    return () => ctrl.abort();
+  }, [session.ready, session.token, workflowId, router]);
 
   async function handleSubmit(name: string) {
-    if (!session.token || !session.user) throw new Error("Not authenticated");
-    await updateWorkflow(session.token, session.user.customerId, workflowId, name);
+    if (!session.token) throw new Error("Not authenticated");
+    await updateWorkflow(session.token, workflowId, name);
     router.push(`/customer/workflows/${workflowId}`);
   }
+
+  const errorMessage = state.status === "error" ? state.message : null;
 
   return (
     <div className="mx-auto max-w-2xl px-8 py-8">
@@ -44,9 +64,23 @@ export default function EditWorkflowPage() {
         Back to Workflow
       </Link>
       <h1 className="mb-6 text-2xl font-semibold text-slate-900">Edit Workflow</h1>
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
-      {initialName !== null && (
-        <WorkflowForm initialName={initialName} onSubmit={handleSubmit} submitLabel="Save Changes" />
+
+      {errorMessage ? (
+        <Card className="mb-6 border-red-200 bg-red-50/50">
+          <CardBody>
+            <p className="text-sm text-red-700">{errorMessage}</p>
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {state.status === "loading" && <p className="text-sm text-slate-500">Loading…</p>}
+
+      {state.status === "ready" && (
+        <WorkflowForm
+          initialName={state.initialName}
+          onSubmit={handleSubmit}
+          submitLabel="Save Changes"
+        />
       )}
     </div>
   );

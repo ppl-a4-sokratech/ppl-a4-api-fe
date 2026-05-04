@@ -12,8 +12,8 @@ export default function NewWorkflowPage() {
   const session = useCustomerSession();
 
   async function handleSubmit(name: string) {
-    if (!session.token || !session.user) throw new Error("Not authenticated");
-    await createWorkflow(session.token, session.user.customerId, name);
+    if (!session.token) throw new Error("Not authenticated");
+    await createWorkflow(session.token, name);
     router.push("/customer/workflows");
   }
 

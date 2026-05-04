@@ -1,39 +1,60 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Pencil, Plus } from "lucide-react";
-import { useCustomerSession } from "@/lib/auth/session";
+import { useCustomerSession, clearCustomerSession } from "@/lib/auth/session";
 import { getWorkflow } from "@/lib/api/workflows";
 import { deleteProfile } from "@/lib/api/profiles";
+import { Card, CardBody } from "@/components/ui/card";
 import ProfileList from "@/components/profiles/ProfileList";
-import type { WorkflowRecord } from "@/lib/types/api";
+import { ApiError, type WorkflowRecord } from "@/lib/types/api";
+
+type FetchState =
+  | { status: "loading" }
+  | { status: "ready"; data: WorkflowRecord }
+  | { status: "error"; message: string };
 
 export default function WorkflowDetailPage() {
+  const router = useRouter();
   const { workflowId } = useParams<{ workflowId: string }>();
   const session = useCustomerSession();
-  const [workflow, setWorkflow] = useState<WorkflowRecord | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<FetchState>({ status: "loading" });
 
-  async function load() {
-    if (!session.token || !session.user) return;
-    setLoading(true);
-    try {
-      const res = await getWorkflow(session.token, session.user.customerId, workflowId);
-      setWorkflow(res.data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load");
-    } finally {
-      setLoading(false);
-    }
+  function load() {
+    if (!session.token) return;
+    const ctrl = new AbortController();
+    setState({ status: "loading" });
+    getWorkflow(session.token, workflowId)
+      .then((res) => {
+        if (ctrl.signal.aborted) return;
+        setState({ status: "ready", data: res.data });
+      })
+      .catch((err: unknown) => {
+        if (ctrl.signal.aborted) return;
+        if (err instanceof ApiError) {
+          if (err.status === 401) {
+            clearCustomerSession();
+            router.replace("/customer/login");
+            return;
+          }
+          setState({ status: "error", message: err.message });
+        } else {
+          setState({ status: "error", message: "Failed to load" });
+        }
+      });
+    return () => ctrl.abort();
   }
 
   useEffect(() => {
-    if (session.ready) void load();
+    if (session.ready) return load();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.ready, session.token, workflowId]);
+
+  const workflow = state.status === "ready" ? state.data : null;
+  const loading = state.status === "loading";
+  const errorMessage = state.status === "error" ? state.message : null;
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-8">
@@ -45,15 +66,21 @@ export default function WorkflowDetailPage() {
         Back to Workflows
       </Link>
 
-      {loading && <p className="text-sm text-slate-500">Loading…</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {errorMessage ? (
+        <Card className="border-red-200 bg-red-50/50">
+          <CardBody>
+            <p className="text-sm text-red-700">{errorMessage}</p>
+          </CardBody>
+        </Card>
+      ) : null}
 
-      {workflow && (
+      {loading && <p className="text-sm text-slate-500">Loading…</p>}
+
+      {workflow ? (
         <>
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-slate-900">{workflow.name}</h1>
-              <p className="text-sm text-slate-500">{workflow.type} · {workflow.status}</p>
             </div>
             <Link
               href={`/customer/workflows/${workflowId}/edit`}
@@ -78,14 +105,14 @@ export default function WorkflowDetailPage() {
           <ProfileList
             workflowId={workflowId}
             profiles={workflow.profiles ?? []}
-            onDeleted={load}
+            onDeleted={() => void load()}
             onDelete={async (profileId) => {
-              if (!session.token || !session.user) throw new Error("Not authenticated");
-              await deleteProfile(session.token, session.user.customerId, workflowId, profileId);
+              if (!session.token) throw new Error("Not authenticated");
+              await deleteProfile(session.token, workflowId, profileId);
             }}
           />
         </>
-      )}
+      ) : null}
     </div>
   );
 }
