@@ -32,7 +32,10 @@ export default function ProfileDetailPage() {
       {profile ? (
         <>
           <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-slate-900">{profile.name}</h1>
+            <div>
+              <h1 className="text-2xl font-semibold text-slate-900">{profile.name}</h1>
+              <p className="mt-1 font-mono text-xs text-slate-400">{profileId}</p>
+            </div>
             <ActionLink
               href={`/customer/workflows/${workflowId}/profiles/${profileId}/edit`}
               icon={<Pencil size={14} />}
