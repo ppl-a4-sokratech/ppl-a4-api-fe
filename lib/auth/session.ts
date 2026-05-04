@@ -14,6 +14,7 @@ import type { AdminSession, CustomerSession } from "../types/api";
 
 export type StoredAdmin = {
   adminId: string;
+  username: string;
   expiresAt: string;
 };
 
@@ -43,7 +44,7 @@ export const persistAdminSession = (session: AdminSession) => {
   setCookie(ADMIN_TOKEN_COOKIE, session.accessToken, expires);
   setCookie(
     ADMIN_USER_COOKIE,
-    JSON.stringify({ adminId: session.adminId, expiresAt: session.expiresAt }),
+    JSON.stringify({ adminId: session.adminId, username: session.username, expiresAt: session.expiresAt }),
     expires
   );
 };

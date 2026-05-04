@@ -5,7 +5,6 @@ import { useEffect } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import {
   HomeIcon,
-  HelpIcon,
   UsersIcon,
 } from "@/components/layout/nav-icons";
 import { clearAdminSession, useAdminSession } from "@/lib/auth/session";
@@ -40,7 +39,7 @@ export default function AdminAreaLayout({
   return (
     <AppShell
       scope="Admin"
-      userLabel={session.user?.adminId}
+      userLabel={session.user?.username}
       onLogout={handleLogout}
       primaryNav={[
         {
@@ -52,13 +51,6 @@ export default function AdminAreaLayout({
           label: "Customers",
           href: "/admin/customers/new",
           icon: <UsersIcon />,
-        },
-      ]}
-      secondaryNav={[
-        {
-          label: "Support",
-          href: "/admin/dashboard",
-          icon: <HelpIcon />,
         },
       ]}
     >

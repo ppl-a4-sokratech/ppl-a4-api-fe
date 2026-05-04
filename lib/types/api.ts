@@ -5,6 +5,7 @@ export type AdminLoginInput = {
 
 export type AdminSession = {
   adminId: string;
+  username: string;
   accessToken: string;
   expiresAt: string;
 };

@@ -23,7 +23,7 @@ export default function AdminDashboardPage() {
         <CardBody className="flex flex-col items-start gap-3">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              Welcome back{session.user ? `, ${session.user.adminId}` : ""}
+              Welcome back{session.user ? `, ${session.user.username}` : ""}
             </h2>
             <p className="text-sm text-slate-500">
               From here you can register new customer accounts that will use the
