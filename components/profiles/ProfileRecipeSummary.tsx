@@ -35,13 +35,18 @@ function RecipeGroup({ title, enabled, fields }: RecipeGroupProps) {
           {Object.entries(fields).map(([key, val]) => (
             <span
               key={key}
-              className={`rounded-full border px-2 py-0.5 text-xs ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
                 val
-                  ? "border-slate-300 bg-slate-50 text-slate-700"
-                  : "border-slate-200 text-slate-400"
+                  ? "bg-emerald-700 text-white"
+                  : "bg-slate-100 text-slate-400"
               }`}
             >
-              {val ? "✓" : "✗"} {key}
+              <span
+                className={`inline-block h-2 w-2 rounded-full ${
+                  val ? "bg-white/70" : "bg-slate-300"
+                }`}
+              />
+              {key}
             </span>
           ))}
         </div>
