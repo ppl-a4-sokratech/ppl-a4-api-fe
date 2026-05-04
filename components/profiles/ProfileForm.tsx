@@ -60,6 +60,29 @@ export default function ProfileForm({
     e.preventDefault();
     setFieldErrors({});
     setRootError('');
+
+    const sectionErrors: Record<string, string> = {};
+    const { behavioral, fingerprint, detection } = recipes;
+    if (behavioral.enabled) {
+      const { enabled: _, ...fields } = behavioral;
+      if (!Object.values(fields).some(Boolean))
+        sectionErrors['recipes.behavioral.enabled'] = 'Enable at least one signal.';
+    }
+    if (fingerprint.enabled) {
+      const { enabled: _, ...fields } = fingerprint;
+      if (!Object.values(fields).some(Boolean))
+        sectionErrors['recipes.fingerprint.enabled'] = 'Enable at least one signal.';
+    }
+    if (detection.enabled) {
+      const { enabled: _, ...fields } = detection;
+      if (!Object.values(fields).some(Boolean))
+        sectionErrors['recipes.detection.enabled'] = 'Enable at least one signal.';
+    }
+    if (Object.keys(sectionErrors).length > 0) {
+      setFieldErrors(sectionErrors);
+      return;
+    }
+
     setLoading(true);
     try {
       await onSubmit({ name: name.trim(), recipes });
