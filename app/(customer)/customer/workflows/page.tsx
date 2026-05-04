@@ -43,7 +43,7 @@ export default function WorkflowsPage() {
         }
       });
     return () => ctrl.abort();
-  }, [session.ready, session.token, router]);
+  }, [session, router]);
 
   function handleDeleted(id: string) {
     if (state.status !== "ready") return;

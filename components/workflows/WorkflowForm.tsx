@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
-import ErrorText from '@/components/ui/ErrorText';
 
 interface WorkflowFormProps {
   initialName?: string;

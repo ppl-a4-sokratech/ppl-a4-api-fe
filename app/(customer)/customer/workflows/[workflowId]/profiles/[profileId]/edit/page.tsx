@@ -44,7 +44,7 @@ export default function EditProfilePage() {
         }
       });
     return () => ctrl.abort();
-  }, [session.ready, session.token, workflowId, profileId, router]);
+  }, [session, workflowId, profileId, router]);
 
   async function handleSubmit(payload: { name: string; recipes: IdentityProfileRecipes }) {
     if (!session.token) throw new Error("Not authenticated");

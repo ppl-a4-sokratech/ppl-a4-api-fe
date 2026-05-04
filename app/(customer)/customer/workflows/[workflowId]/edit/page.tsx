@@ -44,7 +44,7 @@ export default function EditWorkflowPage() {
         }
       });
     return () => ctrl.abort();
-  }, [session.ready, session.token, workflowId, router]);
+  }, [session, workflowId, router]);
 
   async function handleSubmit(name: string) {
     if (!session.token) throw new Error("Not authenticated");

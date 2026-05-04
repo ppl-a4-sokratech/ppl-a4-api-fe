@@ -84,7 +84,7 @@ export default function ProfileDetailPage() {
         }
       });
     return () => ctrl.abort();
-  }, [session.ready, session.token, workflowId, profileId, router]);
+  }, [session, workflowId, profileId, router]);
 
   const profile = state.status === "ready" ? state.data : null;
   const loading = state.status === "loading";
@@ -125,9 +125,10 @@ export default function ProfileDetailPage() {
           <div className="flex flex-col gap-4">
             {(() => {
               const { behavioral, fingerprint, detection } = profile.recipes;
-              const { enabled: _b, ...bFields } = behavioral;
-              const { enabled: _f, ...fFields } = fingerprint;
-              const { enabled: _d, ...dFields } = detection;
+              const { enabled: _eb, ...bFields } = behavioral;
+              const { enabled: _ef, ...fFields } = fingerprint;
+              const { enabled: _ed, ...dFields } = detection;
+              void _eb; void _ef; void _ed;
               return (
                 <>
                   <RecipeGroup title="Behavioral" enabled={behavioral.enabled} fields={bFields} />

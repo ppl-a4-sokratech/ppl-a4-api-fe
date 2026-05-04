@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Pencil, Plus } from "lucide-react";
@@ -22,10 +22,10 @@ export default function WorkflowDetailPage() {
   const session = useCustomerSession();
   const [state, setState] = useState<FetchState>({ status: "loading" });
 
-  function load() {
+  const load = useCallback(() => {
     if (!session.token) return;
     const ctrl = new AbortController();
-    setState({ status: "loading" });
+    setTimeout(() => setState({ status: "loading" }), 0);
     getWorkflow(session.token, workflowId)
       .then((res) => {
         if (ctrl.signal.aborted) return;
@@ -45,12 +45,12 @@ export default function WorkflowDetailPage() {
         }
       });
     return () => ctrl.abort();
-  }
+  }, [session.token, workflowId, router]);
 
   useEffect(() => {
-    if (session.ready) return load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.ready, session.token, workflowId]);
+    if (!session.ready) return;
+    return load();
+  }, [session.ready, load]);
 
   const workflow = state.status === "ready" ? state.data : null;
   const loading = state.status === "loading";

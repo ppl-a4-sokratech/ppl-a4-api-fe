@@ -81,21 +81,14 @@ export default function ProfileForm({
 
     const sectionErrors: Record<string, string> = {};
     const { behavioral, fingerprint, detection } = recipes;
-    if (behavioral.enabled) {
-      const { enabled: _, ...fields } = behavioral;
-      if (!Object.values(fields).some(Boolean))
-        sectionErrors['recipes.behavioral.enabled'] = 'Enable at least one signal.';
-    }
-    if (fingerprint.enabled) {
-      const { enabled: _, ...fields } = fingerprint;
-      if (!Object.values(fields).some(Boolean))
-        sectionErrors['recipes.fingerprint.enabled'] = 'Enable at least one signal.';
-    }
-    if (detection.enabled) {
-      const { enabled: _, ...fields } = detection;
-      if (!Object.values(fields).some(Boolean))
-        sectionErrors['recipes.detection.enabled'] = 'Enable at least one signal.';
-    }
+    const hasSignal = (obj: Record<string, boolean>) =>
+      Object.entries(obj).some(([k, v]) => k !== 'enabled' && v);
+    if (behavioral.enabled && !hasSignal(behavioral))
+      sectionErrors['recipes.behavioral.enabled'] = 'Enable at least one signal.';
+    if (fingerprint.enabled && !hasSignal(fingerprint))
+      sectionErrors['recipes.fingerprint.enabled'] = 'Enable at least one signal.';
+    if (detection.enabled && !hasSignal(detection))
+      sectionErrors['recipes.detection.enabled'] = 'Enable at least one signal.';
     if (Object.keys(sectionErrors).length > 0) {
       setFieldErrors(sectionErrors);
       return;
