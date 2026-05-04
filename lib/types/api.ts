@@ -87,6 +87,16 @@ export type CustomerSummary = {
   };
 };
 
+export type WorkflowRecord = {
+  id: string;
+  customerId: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  profilesCount?: number;
+  profiles?: WorkflowProfileRecord[];
+};
+
 export type ApiErrorBody = {
   error?: string;
   success?: false;
