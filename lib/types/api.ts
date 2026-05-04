@@ -91,8 +91,6 @@ export type WorkflowRecord = {
   id: string;
   customerId: string;
   name: string;
-  status: string;
-  type: string;
   createdAt: string;
   updatedAt: string;
   profilesCount?: number;

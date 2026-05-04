@@ -49,13 +49,11 @@ export default function WorkflowForm({ initialName = '', onSubmit, submitLabel }
           placeholder="e.g. Checkout bot defense"
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0a2540] focus:ring-2 focus:ring-[#0a2540]/20"
         />
-          {error ? (
+          {error && (
             <p className="mt-1.5 flex items-center gap-1 text-xs text-red-600">
               <AlertTriangle size={12} />
               {error}
             </p>
-          ) : (
-            <ErrorText message={error} />
           )}
           <p className="mt-1.5 text-xs text-slate-500">Use 3-160 characters.</p>
         </div>

@@ -23,12 +23,10 @@ interface WorkflowListProps {
   onDelete: (workflowId: string) => Promise<void>;
 }
 
-type SortKey = 'name' | 'type' | 'status' | 'createdAt' | 'profilesCount';
+type SortKey = 'name' | 'createdAt' | 'profilesCount';
 
 const columns: { key: SortKey | 'action'; label: string; sortable: boolean; align?: 'right' }[] = [
   { key: 'name', label: 'Name', sortable: true },
-  { key: 'type', label: 'Type', sortable: true },
-  { key: 'status', label: 'Status', sortable: true },
   { key: 'createdAt', label: 'Created', sortable: true },
   { key: 'profilesCount', label: 'Profiles', sortable: true },
   { key: 'action', label: 'Action', sortable: false, align: 'right' },
@@ -47,32 +45,9 @@ function formatDate(value: string) {
   });
 }
 
-function statusLabel(status: string) {
-  if (status === 'active') return 'Live';
-  return status.charAt(0).toUpperCase() + status.slice(1);
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const style =
-    status === 'active'
-      ? 'bg-[#0a2540] text-white'
-      : status === 'draft'
-        ? 'border border-amber-300 bg-amber-100 text-amber-800'
-        : status === 'paused'
-          ? 'border border-slate-300 bg-slate-200 text-slate-700'
-          : 'border border-slate-300 bg-slate-100 text-slate-700';
-
-  return (
-    <span className={`inline-flex rounded-full px-4 py-1.5 text-xs font-semibold ${style}`}>
-      {statusLabel(status)}
-    </span>
-  );
-}
-
 export default function WorkflowList({ workflows, onDeleted, onDelete }: WorkflowListProps) {
   const [deletingWorkflow, setDeletingWorkflow] = useState<WorkflowRecord | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' }>({
     key: 'createdAt',
     direction: 'desc',
@@ -80,22 +55,11 @@ export default function WorkflowList({ workflows, onDeleted, onDelete }: Workflo
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const statuses = useMemo(
-    () => Array.from(new Set(workflows.map((workflow) => workflow.status))).filter(Boolean),
-    [workflows]
-  );
-
   const filteredWorkflows = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    const result = workflows.filter((workflow) => {
-      const matchesSearch =
-        !term ||
-        workflow.name.toLowerCase().includes(term) ||
-        workflow.type.toLowerCase().includes(term) ||
-        workflow.status.toLowerCase().includes(term);
-      const matchesStatus = statusFilter === 'All' || workflow.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
+    const result = workflows.filter((workflow) =>
+      !term || workflow.name.toLowerCase().includes(term)
+    );
 
     result.sort((a, b) => {
       const aValue = sortConfig.key === 'profilesCount' ? a.profilesCount ?? 0 : a[sortConfig.key];
@@ -107,7 +71,7 @@ export default function WorkflowList({ workflows, onDeleted, onDelete }: Workflo
     });
 
     return result;
-  }, [workflows, searchTerm, statusFilter, sortConfig]);
+  }, [workflows, searchTerm, sortConfig]);
 
   const totalPages = Math.max(1, Math.ceil(filteredWorkflows.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -122,12 +86,6 @@ export default function WorkflowList({ workflows, onDeleted, onDelete }: Workflo
       key,
       direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
     }));
-  }
-
-  function resetFilters() {
-    setSearchTerm('');
-    setStatusFilter('All');
-    setCurrentPage(1);
   }
 
   return (
@@ -157,23 +115,6 @@ export default function WorkflowList({ workflows, onDeleted, onDelete }: Workflo
             )}
           </div>
 
-          <select
-            value={statusFilter}
-            onChange={(event) => {
-              setStatusFilter(event.target.value);
-              setCurrentPage(1);
-            }}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0a2540] focus:ring-2 focus:ring-[#0a2540]/20"
-            aria-label="Filter by status"
-          >
-            <option value="All">All Statuses</option>
-            {statuses.map((status) => (
-              <option key={status} value={status}>
-                {statusLabel(status)}
-              </option>
-            ))}
-          </select>
-
           <div className="ml-auto text-xs text-slate-500">
             {filteredWorkflows.length} of {workflows.length} workflows
           </div>
@@ -183,7 +124,7 @@ export default function WorkflowList({ workflows, onDeleted, onDelete }: Workflo
       <div className="px-8 py-6">
         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px]">
+            <table className="w-full min-w-[600px]">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/70">
                   {columns.map((column) => (
@@ -224,17 +165,17 @@ export default function WorkflowList({ workflows, onDeleted, onDelete }: Workflo
                         <div>
                           <p className="text-sm font-medium text-slate-600">No workflows found</p>
                           <p className="mt-1 text-xs">
-                            {searchTerm || statusFilter !== 'All'
-                              ? 'Try adjusting your search or filters'
+                            {searchTerm
+                              ? 'Try adjusting your search'
                               : 'Create your first workflow to get started'}
                           </p>
                         </div>
-                        {(searchTerm || statusFilter !== 'All') && (
+                        {searchTerm && (
                           <button
-                            onClick={resetFilters}
+                            onClick={() => setSearchTerm('')}
                             className="mt-2 text-xs font-medium text-[#0a2540] hover:underline"
                           >
-                            Clear filters
+                            Clear search
                           </button>
                         )}
                       </div>
@@ -253,10 +194,6 @@ export default function WorkflowList({ workflows, onDeleted, onDelete }: Workflo
                         >
                           {workflow.name}
                         </Link>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{workflow.type}</td>
-                      <td className="px-6 py-4">
-                        <StatusBadge status={workflow.status} />
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600">
                         {formatDate(workflow.createdAt)}

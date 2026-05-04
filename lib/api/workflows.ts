@@ -1,37 +1,30 @@
 import { apiRequest } from "./client";
 import type { WorkflowRecord } from "../types/api";
 
-function base(customerId: string) {
-  return `/admin/customers/${customerId}/workflows`;
-}
+const base = "/customer/workflows";
 
-export const listWorkflows = (token: string, customerId: string) =>
-  apiRequest<{ data: WorkflowRecord[] }>(base(customerId), { token });
+export const listWorkflows = (token: string) =>
+  apiRequest<{ data: WorkflowRecord[] }>(base, { token });
 
-export const createWorkflow = (token: string, customerId: string, name: string) =>
-  apiRequest<{ data: WorkflowRecord }>(base(customerId), {
+export const createWorkflow = (token: string, name: string) =>
+  apiRequest<{ data: WorkflowRecord }>(base, {
     method: "POST",
     token,
-    body: { name, status: "active", type: "fraud_prevention" },
+    body: { name },
   });
 
-export const getWorkflow = (token: string, customerId: string, workflowId: string) =>
-  apiRequest<{ data: WorkflowRecord }>(`${base(customerId)}/${workflowId}`, { token });
+export const getWorkflow = (token: string, workflowId: string) =>
+  apiRequest<{ data: WorkflowRecord }>(`${base}/${workflowId}`, { token });
 
-export const updateWorkflow = (
-  token: string,
-  customerId: string,
-  workflowId: string,
-  name: string
-) =>
-  apiRequest<{ data: WorkflowRecord }>(`${base(customerId)}/${workflowId}`, {
+export const updateWorkflow = (token: string, workflowId: string, name: string) =>
+  apiRequest<{ data: WorkflowRecord }>(`${base}/${workflowId}`, {
     method: "PATCH",
     token,
     body: { name },
   });
 
-export const deleteWorkflow = (token: string, customerId: string, workflowId: string) =>
-  apiRequest<void>(`${base(customerId)}/${workflowId}`, {
+export const deleteWorkflow = (token: string, workflowId: string) =>
+  apiRequest<void>(`${base}/${workflowId}`, {
     method: "DELETE",
     token,
   });
