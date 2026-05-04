@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 
-interface DeleteWorkflowModalProps {
+type DeleteWorkflowModalProps = Readonly<{
   workflowName: string;
   onConfirm: () => Promise<void>;
   onCancel: () => void;
-}
+}>;
 
 export default function DeleteWorkflowModal({
   workflowName,

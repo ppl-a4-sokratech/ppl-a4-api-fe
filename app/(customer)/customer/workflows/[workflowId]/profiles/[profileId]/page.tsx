@@ -14,15 +14,13 @@ type FetchState =
   | { status: "ready"; data: WorkflowProfileRecord }
   | { status: "error"; message: string };
 
-function RecipeGroup({
-  title,
-  enabled,
-  fields,
-}: {
+type RecipeGroupProps = Readonly<{
   title: string;
   enabled: boolean;
   fields: Record<string, boolean>;
-}) {
+}>;
+
+function RecipeGroup({ title, enabled, fields }: RecipeGroupProps) {
   return (
     <Card>
       <CardHeader>
@@ -125,10 +123,9 @@ export default function ProfileDetailPage() {
           <div className="flex flex-col gap-4">
             {(() => {
               const { behavioral, fingerprint, detection } = profile.recipes;
-              const { enabled: _eb, ...bFields } = behavioral;
-              const { enabled: _ef, ...fFields } = fingerprint;
-              const { enabled: _ed, ...dFields } = detection;
-              void _eb; void _ef; void _ed;
+              const bFields = Object.fromEntries(Object.entries(behavioral).filter(([k]) => k !== 'enabled')) as Record<string, boolean>;
+              const fFields = Object.fromEntries(Object.entries(fingerprint).filter(([k]) => k !== 'enabled')) as Record<string, boolean>;
+              const dFields = Object.fromEntries(Object.entries(detection).filter(([k]) => k !== 'enabled')) as Record<string, boolean>;
               return (
                 <>
                   <RecipeGroup title="Behavioral" enabled={behavioral.enabled} fields={bFields} />

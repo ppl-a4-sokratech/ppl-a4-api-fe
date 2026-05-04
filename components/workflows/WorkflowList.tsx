@@ -17,11 +17,11 @@ import {
 import type { WorkflowRecord } from '@/lib/types/api';
 import DeleteWorkflowModal from './DeleteWorkflowModal';
 
-interface WorkflowListProps {
+type WorkflowListProps = Readonly<{
   workflows: WorkflowRecord[];
   onDeleted: (id: string) => void;
   onDelete: (workflowId: string) => Promise<void>;
-}
+}>;
 
 type SortKey = 'name' | 'createdAt' | 'profilesCount';
 
@@ -141,16 +141,11 @@ export default function WorkflowList({ workflows, onDeleted, onDelete }: Workflo
                         }`}
                       >
                         {column.label}
-                        {column.sortable &&
-                          (sortConfig.key === column.key ? (
-                            sortConfig.direction === 'asc' ? (
-                              <ChevronUp size={14} />
-                            ) : (
-                              <ChevronDown size={14} />
-                            )
-                          ) : (
-                            <ArrowUpDown size={14} className="text-slate-400" />
-                          ))}
+                        {column.sortable && (() => {
+                          if (sortConfig.key !== column.key) return <ArrowUpDown size={14} className="text-slate-400" />;
+                          if (sortConfig.direction === 'asc') return <ChevronUp size={14} />;
+                          return <ChevronDown size={14} />;
+                        })()}
                       </div>
                     </th>
                   ))}

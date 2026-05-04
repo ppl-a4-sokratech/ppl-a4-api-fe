@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 
-interface DeleteProfileModalProps {
+type DeleteProfileModalProps = Readonly<{
   profileName: string;
   onConfirm: () => Promise<void>;
   onCancel: () => void;
-}
+}>;
 
 export default function DeleteProfileModal({
   profileName,

@@ -105,7 +105,7 @@ export default function WorkflowDetailPage() {
           <ProfileList
             workflowId={workflowId}
             profiles={workflow.profiles ?? []}
-            onDeleted={() => void load()}
+            onDeleted={() => { load(); }}
             onDelete={async (profileId) => {
               if (!session.token) throw new Error("Not authenticated");
               await deleteProfile(session.token, workflowId, profileId);

@@ -40,12 +40,12 @@ interface SharedFailResponse {
   error: { name: 'ZodError'; message: string; errors?: { path: string[]; message: string }[] };
 }
 
-interface ProfileFormProps {
+type ProfileFormProps = Readonly<{
   initialName?: string;
   initialRecipes?: IdentityProfileRecipes;
   onSubmit: (payload: { name: string; recipes: IdentityProfileRecipes }) => Promise<void>;
   submitLabel: string;
-}
+}>;
 
 export default function ProfileForm({
   initialName = '',
@@ -124,10 +124,11 @@ export default function ProfileForm({
 
       <div className="space-y-5 px-6 py-5">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          <label htmlFor="profile-name" className="mb-1.5 block text-sm font-medium text-slate-700">
             Profile Name <span className="text-red-500">*</span>
           </label>
           <input
+            id="profile-name"
             type="text"
             value={name}
             onChange={(e) => { setName(e.target.value); setFieldErrors((prev) => ({ ...prev, name: '' })); }}

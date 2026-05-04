@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 
-interface WorkflowFormProps {
+type WorkflowFormProps = Readonly<{
   initialName?: string;
   onSubmit: (name: string) => Promise<void>;
   submitLabel: string;
-}
+}>;
 
 export default function WorkflowForm({ initialName = '', onSubmit, submitLabel }: WorkflowFormProps) {
   const [name, setName] = useState(initialName);
@@ -48,10 +48,11 @@ export default function WorkflowForm({ initialName = '', onSubmit, submitLabel }
 
       <div className="space-y-4 px-6 py-5">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          <label htmlFor="workflow-name" className="mb-1.5 block text-sm font-medium text-slate-700">
             Workflow Name <span className="text-red-500">*</span>
           </label>
           <input
+            id="workflow-name"
             type="text"
             value={name}
             onChange={(e) => { setName(e.target.value); setError(''); }}

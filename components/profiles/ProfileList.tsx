@@ -6,12 +6,12 @@ import { Edit3, Eye, Search, ShieldCheck, Trash2, X } from 'lucide-react';
 import type { WorkflowProfileRecord } from '@/lib/types/api';
 import DeleteProfileModal from './DeleteProfileModal';
 
-interface ProfileListProps {
+type ProfileListProps = Readonly<{
   workflowId: string;
   profiles: WorkflowProfileRecord[];
   onDeleted: () => void;
   onDelete: (profileId: string) => Promise<void>;
-}
+}>;
 
 function formatDate(value: string) {
   if (!value) return '-';

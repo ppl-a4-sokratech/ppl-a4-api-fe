@@ -2,54 +2,55 @@
 
 import { Activity, Fingerprint, Radar } from 'lucide-react';
 import type { IdentityProfileRecipes } from '@/lib/types/api';
+import ErrorText from '@/components/ui/ErrorText';
 
 type RecipesBehavioral = IdentityProfileRecipes['behavioral'];
 type RecipesFingerprint = IdentityProfileRecipes['fingerprint'];
 type RecipesDetection = IdentityProfileRecipes['detection'];
-import ErrorText from '@/components/ui/ErrorText';
 
-interface RecipesFormProps {
+type RecipesFormProps = Readonly<{
   value: IdentityProfileRecipes;
   onChange: (value: IdentityProfileRecipes) => void;
   fieldErrors?: Record<string, string>;
-}
+}>;
 
-function Toggle({
-  checked,
-  onChange,
-  label,
-}: {
+type ToggleProps = Readonly<{
   checked: boolean;
   onChange: (v: boolean) => void;
   label: string;
-}) {
+}>;
+
+function Toggle({ checked, onChange, label }: ToggleProps) {
   return (
-    <label className="flex cursor-pointer items-center gap-2">
+    <div className="flex cursor-pointer items-center gap-2" onClick={() => onChange(!checked)}>
       <div
-        onClick={() => onChange(!checked)}
-        className={`relative h-5 w-9 rounded-full transition-colors ${checked ? 'bg-[#0a2540]' : 'bg-slate-300'}`}
+        role="switch"
+        aria-checked={checked}
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onChange(!checked); } }}
+        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0a2540] ${checked ? 'bg-[#0a2540]' : 'bg-slate-300'}`}
       >
         <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4' : 'translate-x-0.5'}`}
+          className={`inline-block h-4 w-4 translate-y-0.5 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4' : 'translate-x-0.5'}`}
         />
       </div>
-      <span className="text-sm text-slate-700">{label}</span>
-    </label>
+      <span className="select-none text-sm text-slate-700">{label}</span>
+    </div>
   );
 }
 
-function BooleanField({
-  checked,
-  onChange,
-  label,
-}: {
+type BooleanFieldProps = Readonly<{
+  id: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   label: string;
-}) {
+}>;
+
+function BooleanField({ id, checked, onChange, label }: BooleanFieldProps) {
   return (
-    <label className="flex cursor-pointer items-center gap-2">
+    <label htmlFor={id} className="flex cursor-pointer items-center gap-2">
       <input
+        id={id}
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
@@ -60,6 +61,15 @@ function BooleanField({
   );
 }
 
+type RecipeSectionProps = Readonly<{
+  title: string;
+  icon: typeof Activity;
+  enabled: boolean;
+  enabledError?: string;
+  onEnabledChange: (value: boolean) => void;
+  children: React.ReactNode;
+}>;
+
 function RecipeSection({
   title,
   icon: Icon,
@@ -67,14 +77,7 @@ function RecipeSection({
   enabledError,
   onEnabledChange,
   children,
-}: {
-  title: string;
-  icon: typeof Activity;
-  enabled: boolean;
-  enabledError?: string;
-  onEnabledChange: (value: boolean) => void;
-  children: React.ReactNode;
-}) {
+}: RecipeSectionProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-orange-50 to-white px-4 py-3">
@@ -131,6 +134,7 @@ export default function RecipesForm({ value, onChange, fieldErrors = {} }: Recip
         {BEHAVIORAL_FIELDS.map((field) => (
           <div key={field}>
             <BooleanField
+              id={`behavioral-${field}`}
               label={field}
               checked={value.behavioral[field]}
               onChange={(v) => updateBehavioral(field, v)}
@@ -150,6 +154,7 @@ export default function RecipesForm({ value, onChange, fieldErrors = {} }: Recip
         {FINGERPRINT_FIELDS.map((field) => (
           <div key={field}>
             <BooleanField
+              id={`fingerprint-${field}`}
               label={field}
               checked={value.fingerprint[field]}
               onChange={(v) => updateFingerprint(field, v)}
@@ -169,6 +174,7 @@ export default function RecipesForm({ value, onChange, fieldErrors = {} }: Recip
         {DETECTION_FIELDS.map((field) => (
           <div key={field}>
             <BooleanField
+              id={`detection-${field}`}
               label={field}
               checked={value.detection[field]}
               onChange={(v) => updateDetection(field, v)}
