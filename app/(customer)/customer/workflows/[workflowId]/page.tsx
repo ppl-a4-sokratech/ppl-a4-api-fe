@@ -35,6 +35,7 @@ export default function WorkflowDetailPage() {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-slate-900">{workflow.name}</h1>
+              <p className="mt-1 font-mono text-xs text-slate-400">{workflowId}</p>
             </div>
             <ActionLink href={`/customer/workflows/${workflowId}/edit`} icon={<Pencil size={14} />}>
               Edit

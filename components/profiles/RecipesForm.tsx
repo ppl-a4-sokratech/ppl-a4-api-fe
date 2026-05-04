@@ -49,16 +49,19 @@ type BooleanFieldProps = Readonly<{
 
 function BooleanField({ id, checked, onChange, label }: BooleanFieldProps) {
   return (
-    <label htmlFor={id} className="flex cursor-pointer items-center gap-2">
-      <input
-        id={id}
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 rounded border-slate-300 accent-[#0a2540]"
-      />
-      <span className="text-sm capitalize text-slate-700">{label}</span>
-    </label>
+    <button
+      id={id}
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+        checked ? 'bg-emerald-700 text-white' : 'bg-white text-slate-500 ring-1 ring-slate-500 hover:bg-slate-50'
+      }`}
+    >
+      <span className={`inline-block h-2 w-2 rounded-full ${checked ? 'bg-white/70' : 'bg-slate-300'}`} />
+      <span className="capitalize">{label}</span>
+    </button>
   );
 }
 
@@ -66,8 +69,10 @@ type RecipeSectionProps = Readonly<{
   title: string;
   icon: typeof Activity;
   enabled: boolean;
+  allSelected: boolean;
   enabledError?: string;
   onEnabledChange: (value: boolean) => void;
+  onSelectAll: (select: boolean) => void;
   children: React.ReactNode;
 }>;
 
@@ -75,8 +80,10 @@ function RecipeSection({
   title,
   icon: Icon,
   enabled,
+  allSelected,
   enabledError,
   onEnabledChange,
+  onSelectAll,
   children,
 }: RecipeSectionProps) {
   return (
@@ -93,7 +100,18 @@ function RecipeSection({
       <div className="px-4 py-4">
         <ErrorText message={enabledError} />
         {enabled ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{children}</div>
+          <>
+            <div className="mb-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => onSelectAll(!allSelected)}
+                className="text-xs font-medium text-[#0a2540] hover:underline"
+              >
+                {allSelected ? 'Clear all' : 'Select all'}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">{children}</div>
+          </>
         ) : (
           <p className="text-sm text-slate-500">Enable this group to configure its signals.</p>
         )}
@@ -112,6 +130,10 @@ const DETECTION_FIELDS: (keyof Omit<RecipesDetection, 'enabled'>)[] = [
   'emulator', 'webDriver',
 ];
 
+function allTrue<T extends Record<string, boolean>>(obj: T, keys: (keyof T)[]) {
+  return keys.every((k) => obj[k]);
+}
+
 export default function RecipesForm({ value, onChange, fieldErrors = {} }: RecipesFormProps) {
   function updateBehavioral<K extends keyof RecipesBehavioral>(key: K, val: RecipesBehavioral[K]) {
     onChange({ ...value, behavioral: { ...value.behavioral, [key]: val } });
@@ -123,14 +145,29 @@ export default function RecipesForm({ value, onChange, fieldErrors = {} }: Recip
     onChange({ ...value, detection: { ...value.detection, [key]: val } });
   }
 
+  function selectAllBehavioral(select: boolean) {
+    const patch = Object.fromEntries(BEHAVIORAL_FIELDS.map((f) => [f, select])) as Omit<RecipesBehavioral, 'enabled'>;
+    onChange({ ...value, behavioral: { ...value.behavioral, ...patch } });
+  }
+  function selectAllFingerprint(select: boolean) {
+    const patch = Object.fromEntries(FINGERPRINT_FIELDS.map((f) => [f, select])) as Omit<RecipesFingerprint, 'enabled'>;
+    onChange({ ...value, fingerprint: { ...value.fingerprint, ...patch } });
+  }
+  function selectAllDetection(select: boolean) {
+    const patch = Object.fromEntries(DETECTION_FIELDS.map((f) => [f, select])) as Omit<RecipesDetection, 'enabled'>;
+    onChange({ ...value, detection: { ...value.detection, ...patch } });
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <RecipeSection
         title="Behavioral"
         icon={Activity}
         enabled={value.behavioral.enabled}
+        allSelected={allTrue(value.behavioral, BEHAVIORAL_FIELDS)}
         enabledError={fieldErrors['recipes.behavioral.enabled']}
         onEnabledChange={(v) => updateBehavioral('enabled', v)}
+        onSelectAll={selectAllBehavioral}
       >
         {BEHAVIORAL_FIELDS.map((field) => (
           <div key={field}>
@@ -149,8 +186,10 @@ export default function RecipesForm({ value, onChange, fieldErrors = {} }: Recip
         title="Fingerprint"
         icon={Fingerprint}
         enabled={value.fingerprint.enabled}
+        allSelected={allTrue(value.fingerprint, FINGERPRINT_FIELDS)}
         enabledError={fieldErrors['recipes.fingerprint.enabled']}
         onEnabledChange={(v) => updateFingerprint('enabled', v)}
+        onSelectAll={selectAllFingerprint}
       >
         {FINGERPRINT_FIELDS.map((field) => (
           <div key={field}>
@@ -169,8 +208,10 @@ export default function RecipesForm({ value, onChange, fieldErrors = {} }: Recip
         title="Detection"
         icon={Radar}
         enabled={value.detection.enabled}
+        allSelected={allTrue(value.detection, DETECTION_FIELDS)}
         enabledError={fieldErrors['recipes.detection.enabled']}
         onEnabledChange={(v) => updateDetection('enabled', v)}
+        onSelectAll={selectAllDetection}
       >
         {DETECTION_FIELDS.map((field) => (
           <div key={field}>
