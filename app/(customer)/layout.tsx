@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import {
-  HelpIcon,
   HomeIcon,
   WorkflowIcon,
 } from "@/components/layout/nav-icons";
@@ -52,13 +51,6 @@ export default function CustomerAreaLayout({
           label: "Workflow",
           href: "/customer/workflows",
           icon: <WorkflowIcon />,
-        },
-      ]}
-      secondaryNav={[
-        {
-          label: "Support",
-          href: "/customer/dashboard",
-          icon: <HelpIcon />,
         },
       ]}
     >
