@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
+
+const NAME_MIN = 3;
+const NAME_MAX = 100;
 import type { IdentityProfileRecipes } from '@/lib/types/api';
 import { parseZodError } from '@/lib/parseZodError';
 import ErrorText from '@/components/ui/ErrorText';
@@ -56,10 +59,25 @@ export default function ProfileForm({
   const [rootError, setRootError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  const trimmedName = name.trim();
+  const nameCharCount = trimmedName.length;
+  const nameTooShort = nameCharCount > 0 && nameCharCount < NAME_MIN;
+  const nameTooLong = nameCharCount > NAME_MAX;
+  const nameInvalid = nameTooShort || nameTooLong;
+
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     setFieldErrors({});
     setRootError('');
+
+    if (trimmedName.length < NAME_MIN) {
+      setFieldErrors({ name: `Name must be at least ${NAME_MIN} characters.` });
+      return;
+    }
+    if (trimmedName.length > NAME_MAX) {
+      setFieldErrors({ name: `Name must be at most ${NAME_MAX} characters.` });
+      return;
+    }
 
     const sectionErrors: Record<string, string> = {};
     const { behavioral, fingerprint, detection } = recipes;
@@ -119,13 +137,31 @@ export default function ProfileForm({
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
+            onChange={(e) => { setName(e.target.value); setFieldErrors((prev) => ({ ...prev, name: '' })); }}
             placeholder="e.g. High sensitivity"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0a2540] focus:ring-2 focus:ring-[#0a2540]/20"
+            maxLength={NAME_MAX}
+            className={`w-full rounded-md border px-3 py-2 text-sm outline-none transition focus:ring-2 ${
+              nameInvalid || fieldErrors['name']
+                ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
+                : 'border-slate-300 focus:border-[#0a2540] focus:ring-[#0a2540]/20'
+            }`}
           />
-          <ErrorText message={fieldErrors['name']} />
-          <p className="mt-1.5 text-xs text-slate-500">Use 1-100 characters.</p>
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <div>
+              {(nameTooShort || fieldErrors['name']) && (
+                <p className="flex items-center gap-1 text-xs text-red-600">
+                  <AlertTriangle size={12} />
+                  {fieldErrors['name'] || `Name must be at least ${NAME_MIN} characters.`}
+                </p>
+              )}
+              {!nameTooShort && !fieldErrors['name'] && (
+                <p className="text-xs text-slate-500">{NAME_MIN}–{NAME_MAX} characters.</p>
+              )}
+            </div>
+            <span className={`text-xs tabular-nums ${nameTooLong ? 'text-red-600 font-medium' : 'text-slate-400'}`}>
+              {nameCharCount}/{NAME_MAX}
+            </span>
+          </div>
         </div>
 
         <div>

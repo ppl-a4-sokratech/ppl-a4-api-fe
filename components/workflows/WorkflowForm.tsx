@@ -15,12 +15,23 @@ export default function WorkflowForm({ initialName = '', onSubmit, submitLabel }
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const MIN = 3;
+  const MAX = 160;
+  const trimmed = name.trim();
+  const charCount = trimmed.length;
+  const tooShort = charCount > 0 && charCount < MIN;
+  const tooLong = charCount > MAX;
+  const inputInvalid = tooShort || tooLong;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    const t = name.trim();
+    if (t.length < MIN) { setError(`Name must be at least ${MIN} characters.`); return; }
+    if (t.length > MAX) { setError(`Name must be at most ${MAX} characters.`); return; }
     setLoading(true);
     try {
-      await onSubmit(name.trim());
+      await onSubmit(t);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Something went wrong';
       setError(msg);
@@ -41,21 +52,40 @@ export default function WorkflowForm({ initialName = '', onSubmit, submitLabel }
           <label className="mb-1.5 block text-sm font-medium text-slate-700">
             Workflow Name <span className="text-red-500">*</span>
           </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          placeholder="e.g. Checkout bot defense"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0a2540] focus:ring-2 focus:ring-[#0a2540]/20"
-        />
-          {error && (
-            <p className="mt-1.5 flex items-center gap-1 text-xs text-red-600">
-              <AlertTriangle size={12} />
-              {error}
-            </p>
-          )}
-          <p className="mt-1.5 text-xs text-slate-500">Use 3-160 characters.</p>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => { setName(e.target.value); setError(''); }}
+            placeholder="e.g. Checkout bot defense"
+            maxLength={MAX}
+            className={`w-full rounded-md border px-3 py-2 text-sm outline-none transition focus:ring-2 ${
+              inputInvalid
+                ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
+                : 'border-slate-300 focus:border-[#0a2540] focus:ring-[#0a2540]/20'
+            }`}
+          />
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <div>
+              {tooShort && (
+                <p className="flex items-center gap-1 text-xs text-red-600">
+                  <AlertTriangle size={12} />
+                  Name must be at least {MIN} characters.
+                </p>
+              )}
+              {error && !tooShort && (
+                <p className="flex items-center gap-1 text-xs text-red-600">
+                  <AlertTriangle size={12} />
+                  {error}
+                </p>
+              )}
+              {!tooShort && !error && (
+                <p className="text-xs text-slate-500">{MIN}–{MAX} characters.</p>
+              )}
+            </div>
+            <span className={`text-xs tabular-nums ${tooLong ? 'text-red-600 font-medium' : 'text-slate-400'}`}>
+              {charCount}/{MAX}
+            </span>
+          </div>
         </div>
       </div>
 
