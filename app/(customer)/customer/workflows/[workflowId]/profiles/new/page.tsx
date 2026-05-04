@@ -14,8 +14,8 @@ export default function NewProfilePage() {
   const session = useCustomerSession();
 
   async function handleSubmit(payload: { name: string; recipes: IdentityProfileRecipes }) {
-    if (!session.token || !session.user) throw new Error("Not authenticated");
-    await createProfile(session.token, session.user.customerId, workflowId, payload);
+    if (!session.token) throw new Error("Not authenticated");
+    await createProfile(session.token, workflowId, payload);
     router.push(`/customer/workflows/${workflowId}`);
   }
 

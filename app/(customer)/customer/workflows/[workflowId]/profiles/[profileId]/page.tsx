@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Pencil } from "lucide-react";
-import { useCustomerSession } from "@/lib/auth/session";
+import { useCustomerSession, clearCustomerSession } from "@/lib/auth/session";
 import { getProfile } from "@/lib/api/profiles";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
-import type { WorkflowProfileRecord } from "@/lib/types/api";
+import { ApiError, type WorkflowProfileRecord } from "@/lib/types/api";
+
+type FetchState =
+  | { status: "loading" }
+  | { status: "ready"; data: WorkflowProfileRecord }
+  | { status: "error"; message: string };
 
 function RecipeGroup({
   title,
@@ -51,26 +56,39 @@ function RecipeGroup({
 }
 
 export default function ProfileDetailPage() {
+  const router = useRouter();
   const { workflowId, profileId } = useParams<{ workflowId: string; profileId: string }>();
   const session = useCustomerSession();
-  const [profile, setProfile] = useState<WorkflowProfileRecord | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<FetchState>({ status: "loading" });
 
   useEffect(() => {
-    if (!session.ready || !session.token || !session.user) return;
-    const { token, user } = session;
-    (async () => {
-      try {
-        const res = await getProfile(token, user.customerId, workflowId, profileId);
-        setProfile(res.data);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [session.ready, session.token, workflowId, profileId]);
+    if (!session.ready || !session.token) return;
+    const ctrl = new AbortController();
+    const { token } = session;
+    getProfile(token, workflowId, profileId)
+      .then((res) => {
+        if (ctrl.signal.aborted) return;
+        setState({ status: "ready", data: res.data });
+      })
+      .catch((err: unknown) => {
+        if (ctrl.signal.aborted) return;
+        if (err instanceof ApiError) {
+          if (err.status === 401) {
+            clearCustomerSession();
+            router.replace("/customer/login");
+            return;
+          }
+          setState({ status: "error", message: err.message });
+        } else {
+          setState({ status: "error", message: "Failed to load" });
+        }
+      });
+    return () => ctrl.abort();
+  }, [session.ready, session.token, workflowId, profileId, router]);
+
+  const profile = state.status === "ready" ? state.data : null;
+  const loading = state.status === "loading";
+  const errorMessage = state.status === "error" ? state.message : null;
 
   return (
     <div className="mx-auto max-w-2xl px-8 py-8">
@@ -82,10 +100,17 @@ export default function ProfileDetailPage() {
         Back to Workflow
       </Link>
 
-      {loading && <p className="text-sm text-slate-500">Loading…</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {errorMessage ? (
+        <Card className="border-red-200 bg-red-50/50">
+          <CardBody>
+            <p className="text-sm text-red-700">{errorMessage}</p>
+          </CardBody>
+        </Card>
+      ) : null}
 
-      {profile && (
+      {loading && <p className="text-sm text-slate-500">Loading…</p>}
+
+      {profile ? (
         <>
           <div className="mb-6 flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-slate-900">{profile.name}</h1>
@@ -113,7 +138,7 @@ export default function ProfileDetailPage() {
             })()}
           </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 }
