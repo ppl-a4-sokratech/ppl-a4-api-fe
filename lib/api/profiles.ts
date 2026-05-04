@@ -1,55 +1,41 @@
 import { apiRequest } from "./client";
 import type { WorkflowProfileRecord, IdentityProfileRecipes } from "../types/api";
 
-function base(customerId: string, workflowId: string) {
-  return `/admin/customers/${customerId}/workflows/${workflowId}/profiles`;
+function base(workflowId: string) {
+  return `/customer/workflows/${workflowId}/profiles`;
 }
 
-export const listProfiles = (token: string, customerId: string, workflowId: string) =>
-  apiRequest<{ data: WorkflowProfileRecord[] }>(base(customerId, workflowId), { token });
+export const listProfiles = (token: string, workflowId: string) =>
+  apiRequest<{ data: WorkflowProfileRecord[] }>(base(workflowId), { token });
 
 export const createProfile = (
   token: string,
-  customerId: string,
   workflowId: string,
   payload: { name: string; recipes: IdentityProfileRecipes }
 ) =>
-  apiRequest<{ data: WorkflowProfileRecord }>(base(customerId, workflowId), {
+  apiRequest<{ data: WorkflowProfileRecord }>(base(workflowId), {
     method: "POST",
     token,
     body: payload,
   });
 
-export const getProfile = (
-  token: string,
-  customerId: string,
-  workflowId: string,
-  profileId: string
-) =>
-  apiRequest<{ data: WorkflowProfileRecord }>(
-    `${base(customerId, workflowId)}/${profileId}`,
-    { token }
-  );
+export const getProfile = (token: string, workflowId: string, profileId: string) =>
+  apiRequest<{ data: WorkflowProfileRecord }>(`${base(workflowId)}/${profileId}`, { token });
 
 export const updateProfile = (
   token: string,
-  customerId: string,
   workflowId: string,
   profileId: string,
   payload: { name: string; recipes: IdentityProfileRecipes }
 ) =>
-  apiRequest<{ data: WorkflowProfileRecord }>(
-    `${base(customerId, workflowId)}/${profileId}`,
-    { method: "PATCH", token, body: payload }
-  );
+  apiRequest<{ data: WorkflowProfileRecord }>(`${base(workflowId)}/${profileId}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
 
-export const deleteProfile = (
-  token: string,
-  customerId: string,
-  workflowId: string,
-  profileId: string
-) =>
-  apiRequest<void>(`${base(customerId, workflowId)}/${profileId}`, {
+export const deleteProfile = (token: string, workflowId: string, profileId: string) =>
+  apiRequest<void>(`${base(workflowId)}/${profileId}`, {
     method: "DELETE",
     token,
   });
