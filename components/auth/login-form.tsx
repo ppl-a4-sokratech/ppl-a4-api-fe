@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import {
   useEffect,
@@ -94,6 +95,8 @@ export function LoginForm<TSession>({
     }
   }, [router, target, hasExistingSession]);
 
+  const portal = scope.replace(/^\//, "") || "public";
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -104,18 +107,56 @@ export function LoginForm<TSession>({
     }
 
     setSubmitting(true);
-    try {
-      const session = await loginApi({
-        username: username.trim(),
-        password,
-      });
-      persistSession(session);
-      router.replace(target);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to fetch");
-    } finally {
-      setSubmitting(false);
-    }
+
+    await Sentry.startSpan(
+      {
+        name: `auth.login.${portal}`,
+        op: "auth.login",
+        attributes: {
+          "auth.portal": portal,
+          "auth.username_provided": true,
+        },
+      },
+      async (span) => {
+        try {
+          const session = await loginApi({
+            username: username.trim(),
+            password,
+          });
+          persistSession(session);
+
+          Sentry.setUser({
+            username: username.trim(),
+            segment: portal,
+          });
+          Sentry.addBreadcrumb({
+            category: "auth",
+            message: `Login success (${portal})`,
+            level: "info",
+          });
+
+          Sentry.getCurrentScope().setTag("auth.success", "true");
+          router.replace(target);
+        } catch (err) {
+          const status = err instanceof ApiError ? err.status : 0;
+          const message = err instanceof ApiError ? err.message : "Failed to fetch";
+
+          Sentry.getCurrentScope().setTag("auth.success", "false");
+          Sentry.getCurrentScope().setTag("auth.failure_status", String(status));
+
+          Sentry.addBreadcrumb({
+            category: "auth",
+            message: `Login failed (${portal}): ${message}`,
+            level: "warning",
+            data: { status },
+          });
+
+          setError(message);
+        } finally {
+          setSubmitting(false);
+        }
+      }
+    );
   };
 
   return (
